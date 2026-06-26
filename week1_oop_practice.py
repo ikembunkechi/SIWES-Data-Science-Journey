@@ -1,17 +1,17 @@
 """
-SIWES Week 1: Object-Oriented Programming for Data Preprocessing
+SIWES Week 1-2: Object-Oriented Programming & Feature Engineering Logic
 Author: Chibuike
-Description: A script demonstrating how to use Python classes to encapsulate
-             and clean raw data fields before analysis.
+Description: Enhancing the DataRecord class to automatically compute academic
+             standing (honors classification) based on numerical CGPA thresholds.
 """
 
 class DataRecord:
     def __init__(self, record_id: int, student_name: str, raw_cgpa: str):
         self.record_id = record_id
-        # Clean the name string immediately on instantiation
         self.student_name = self.clean_name(student_name)
-        # Normalize the CGPA to a float value
         self.cgpa = self.normalize_cgpa(raw_cgpa)
+        # Automatically compute academic standing upon creation
+        self.academic_standing = self.get_academic_standing()
 
     def clean_name(self, name: str) -> str:
         """Removes trailing whitespaces and capitalizes the name properly."""
@@ -26,32 +26,45 @@ class DataRecord:
             if 0.0 <= cleaned_value <= 5.0:
                 return round(cleaned_value, 2)
             else:
-                print(f"[Warning] Out-of-bounds CGPA detected for ID {self.record_id}: {raw_cgpa}")
                 return 0.0
         except (ValueError, TypeError):
-            print(f"[Error] Invalid numeric data format for ID {self.record_id}: '{raw_cgpa}'")
             return 0.0
+
+    def get_academic_standing(self) -> str:
+        """
+        Applies conditional rules to classify the student's academic tier.
+        This represents basic rule-based feature engineering.
+        """
+        if self.cgpa >= 4.50:
+            return "First Class (Honors List)"
+        elif self.cgpa >= 3.50:
+            return "Second Class Upper"
+        elif self.cgpa >= 2.40:
+            return "Second Class Lower"
+        elif self.cgpa > 0.0:
+            return "Third Class / Pass"
+        else:
+            return "Undetermined / Academic Probation"
 
     def display_summary(self):
         """Prints a structured summary of the processed data record."""
-        print(f"Record [{self.record_id}] | Student: {self.student_name} | Cleaned CGPA: {self.cgpa}")
+        print(f"ID: {self.record_id} | Name: {self.student_name:<20} | CGPA: {self.cgpa:<5} | Standing: {self.academic_standing}")
 
 
 # --- TEST EXECUTION AREA ---
 if __name__ == "__main__":
-    print("--- Simulating Raw Ingestion Pipeline ---\n")
+    print("--- Running Enhanced Data Processing Ingestion Pipeline ---\n")
 
-    # Raw, dirty dataset simulating real-world user or database inputs
     dirty_dataset = [
         {"id": 1, "name": "Chibuike Okeke  ", "cgpa": "4.57"},
         {"id": 2, "name": "Amadi Blessing", "cgpa": "3.8"},
-        {"id": 3, "name": "Tunde Bakare ", "cgpa": "invalid_data_point"},  # Missing/corrupted data
-        {"id": 4, "name": "Ngozi Obi", "cgpa": "6.2"},                        # Out-of-bounds anomaly
+        {"id": 3, "name": "Tunde Bakare ", "cgpa": "invalid_data_point"},
+        {"id": 4, "name": "Ngozi Obi", "cgpa": "6.2"}, # High but invalid, goes to probation/0.0
+        {"id": 5, "name": "Chioma Nwachukwu", "cgpa": "4.45"}
     ]
 
     processed_records = []
 
-    # Iterating through dirty data and instantiating our OOP DataRecord objects
     for data in dirty_dataset:
         record = DataRecord(
             record_id=data["id"],
@@ -60,6 +73,6 @@ if __name__ == "__main__":
         )
         processed_records.append(record)
 
-    print("\n--- Processed & Cleaned Records ---")
+    print("--- Final Cleaned Database Output ---")
     for record in processed_records:
         record.display_summary()
